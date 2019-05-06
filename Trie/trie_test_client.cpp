@@ -6,6 +6,7 @@ int main(void) {
 	trie1.insert("gaikwad");
 	std::cout<<std::endl;
 	trie1.insert("gaikpdsb");
-
+	
+	trie1.display();
 	return 0;
 }

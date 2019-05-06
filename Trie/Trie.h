@@ -6,6 +6,8 @@
 #include<vector>
 #include<memory>
 
+const short int MAX_CHARS=26;
+
 class _TrieNode
 {
 
@@ -13,7 +15,7 @@ public:
 	char data;
 	bool isCompleteWord;
 	unsigned short int degree;
-	std::shared_ptr<_TrieNode> children[26]={nullptr};
+	std::shared_ptr<_TrieNode> children[MAX_CHARS]={nullptr};
 	
 	_TrieNode() { }
 	_TrieNode(char character, bool isCompleteWord) {
@@ -29,10 +31,14 @@ private:
 	std::shared_ptr<_TrieNode> root;
 
 	void insert_character(std::string::iterator currentCharItr,std::string::iterator endOfStringItr, std::shared_ptr<_TrieNode> existing_node);
+	//Internal recuresive function to traverse the tree
+	void display_rec(std::shared_ptr<_TrieNode> node);
+
 
 public:
 	Trie();
 	Trie(std::string word);
 	void insert(std::string word);
+	void display();
 };
 #endif
