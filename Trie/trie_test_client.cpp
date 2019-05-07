@@ -8,5 +8,7 @@ int main(void) {
 	trie1.insert("gaikpdsb");
 	
 	trie1.display();
+	std::cout<<"\nNow deleting objects:"<<std::endl;
+	trie1.delete_word("gaikwad");
 	return 0;
 }

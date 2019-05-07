@@ -34,11 +34,13 @@ private:
 	//Internal recuresive function to traverse the tree
 	void display_rec(std::shared_ptr<_TrieNode> node);
 
+	bool delete_character(std::string::iterator currentCharItr,std::string::iterator endOfStringItr, std::shared_ptr<_TrieNode> existing_node);
 
 public:
 	Trie();
 	Trie(std::string word);
 	void insert(std::string word);
 	void display();
+	bool delete_word(std::string word);
 };
 #endif
