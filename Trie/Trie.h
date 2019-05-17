@@ -34,7 +34,8 @@ private:
 	//Internal recuresive function to traverse the tree
 	void display_rec(std::shared_ptr<_TrieNode> node);
 
-	bool delete_character(std::string::iterator currentCharItr,std::string::iterator endOfStringItr, std::shared_ptr<_TrieNode> existing_node);
+	int delete_character(std::string::iterator currentCharItr,std::string::iterator endOfStringItr, std::shared_ptr<_TrieNode> existing_node);
+	int delete_character_v2(std::string::iterator currentCharItr,std::string::iterator endOfStringItr, std::shared_ptr<_TrieNode> existing_node);
 
 public:
 	Trie();
