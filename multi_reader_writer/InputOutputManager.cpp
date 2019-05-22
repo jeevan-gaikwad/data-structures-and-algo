@@ -1,28 +1,39 @@
 #include<iostream>
+#include<thread>
+#include <chrono>
 #include"InputOutputManager.h"
 #include"FileResource.h"
 
 InputOutputManager::InputOutputManager(int resourceType, std::string id) {
+		ioQueueManager = std::make_shared<QueueManager>();
 		switch(resourceType) {
-			case FILE:
+			case TYPE_FILE:
 				 resource = std::make_shared<FileResource>(id);
 					break;
-			case PIPE:
+			case TYPE_PIPE:
 					break;
 			
 			default: //throw InvalidResourceTypeException()			
+				break;
 		}
 		//Initialize a pool of reader and writer threads which would poll our queues
-		
-	}
+		createReaderThreads();
+		createWriterThreads();
+		//std::thread wait(&InputOutputManager::waitForAllThreadsToFinish, this);
+		//wait.join();
+}
+
+InputOutputManager::~InputOutputManager() {
+	waitForAllThreadsToFinish();
+}
 	
 bool InputOutputManager::open()  { // should throw an exception if there is an error while opening the resource
             return resource->open();
 }
 
-int  InputOutputManager::InputOutputManager::write(std::string buff) {
+int  InputOutputManager::write(std::string buff) {
 			IORequest writeReq;
-			writeReq.type = IORequest::Type:WRITE;
+			writeReq.type = IORequest::Type::WRITE;
 			writeReq.noOfBytes = buff.length();
 			writeReq.content = buff;
             ioQueueManager->addWriteReq(writeReq);
@@ -31,125 +42,80 @@ int  InputOutputManager::InputOutputManager::write(std::string buff) {
 int  InputOutputManager::read(int noOfBytesToRead, std::string& buff)
 {
         IORequest readReq;
-		readReq.type = IORequest::Type:READ;
+		readReq.type = IORequest::Type::READ;
 		readReq.noOfBytes = noOfBytesToRead;
 		readReq.content = buff;
-        ioQueueManager->addWriteReq(readReq);    
-}
-//Internal functions
-void InputOutputManager::process_queues() {
-             
-
+        ioQueueManager->addReadReq(readReq);    
 }
 	
 //thread function to actually perform read opeation
-void InputOutputManager::processReadRequest(void *queueManager) {
-		static int noOfReadReqsProcessed;
-		std::shared_ptr<QueueManager > ioQueueManager = reinterpret_cast<std::shared_ptr>(queueManager);
-		if(ioQueueManager->getReadReqCurrentSize > 0) {
-			IORequest& readReq= ioQueueManager->getReadReq();
-			if(noOfReadReqsProcessed > 5 ) {
-				noOfReadReqsProcessed = 0;
-				sleep(5); //For fair share among read and write requests
-			}else {
-				noOfReadReqsProcessed++;
-				resource->read(writeReq.noOfBytes, writeReq.content);
+void InputOutputManager::processReadRequest() {
+		static int noOfReadReqsProcessed = 0;
+		while(true) {
+			std::cout<<"Checking readReqQueue size..."<<std::endl;
+			if(ioQueueManager->getReadReqCurrentSize() > 0) {
+				IORequest& readReq= ioQueueManager->getReadReq();
+				if(noOfReadReqsProcessed > 5 ) {
+					noOfReadReqsProcessed = 0;
+					std::this_thread::sleep_for(std::chrono::seconds(2)); //For fair share among read and write requests
+				}else {
+					noOfReadReqsProcessed++;
+					resource->read(readReq.noOfBytes, readReq.content);
+				}
+			} else {
+				std::cout<<"Nothing in the queue..sleeping for few seconds"<<std::endl;
+				std::this_thread::sleep_for(std::chrono::seconds(3));//sleep if nothing to be processed in the queue
 			}
-		} else {
-			sleep(2);
 		}
 		
-	}
+}
 	
 	//thread function to actually perform read opeation
-void InputOutputManager::processWriteRequest(void *queueManager) {
-		static int noOfWriteReqsProcessed = 0;
-		
-		std::shared_ptr<QueueManager > ioQueueManager = reinterpret_cast<std::shared_ptr>(queueManager);
-		IORequest& writeReq= ioQueueManager->getWriteReq();
-		if(getWriteReqCurrentSize()> 0 && noOfWriteReqsProcessed > 5 ) {
-			noOfWriteReqsProcessed = 0;
-			sleep(5); //For fair share among read and write requests
-		}else {
-			noOfWriteReqsProcessed++;
-			resource->write(writeReq.content);
+void InputOutputManager::processWriteRequest() {
+		 int noOfWriteReqsProcessed = 0;
+		 std::cout<<"Writer Thread started executing.."<<std::endl;
+		while(true) {	
+		/*
+			if(ioQueueManager->getWriteReqCurrentSize()> 0 && noOfWriteReqsProcessed > 5 ) {
+				noOfWriteReqsProcessed = 0;
+				std::this_thread::sleep_for(std::chrono::seconds(2)); //For fair share among read and write requests
+			}else if(ioQueueManager->getWriteReqCurrentSize()> 0) {
+				IORequest& writeReq= ioQueueManager->getWriteReq();
+				noOfWriteReqsProcessed++;
+				resource->write(writeReq.content);
+			}else {
+				std::cout<<"Nothing in the writer queue. Sleeping for few seconds.."<<std::endl;
+				std::this_thread::sleep_for(std::chrono::seconds(2));//sleep if nothing to be processed in the queue
+			}
+			*/
+			std::cout<<"Sleeping..."<<std::endl;
+			std::this_thread::sleep_for(std::chrono::seconds(2));
 		}
-	}
+}
 	
 void InputOutputManager::createReaderThreads() {
 		//create 10(MAX read threads) threads and pass processIORequest function with ioQueueManager as paramater
-	}
+		for(int i = 0; i< MAX_NO_OF_READER_THREADS; i++) {
+			readerThreadPool[i] = std::make_shared<std::thread>(&InputOutputManager::processReadRequest, this);			
+		}
+		std::cout<<"Readers thread pool created successfully"<<std::endl;
+}
 	
 void InputOutputManager::createWriterThreads() {
 		//create single thread to perform write operation and pass processWriteRequest function as t_func.
+		writerThread = std::make_shared<std::thread>(&InputOutputManager::processWriteRequest, this); //we just need single thread to perform write operation.1 at a time.
+		//writerThread = new std::thread(&InputOutputManager::processWriteRequest, this);
+		//writerThread->join();
+		std::cout<<"Writer thread created successfully"<<std::endl;
 		
-		
+}
+
+void InputOutputManager::waitForAllThreadsToFinish() {
+	std::cout<<"Waiting thread started"<<std::endl;
+	for(int i=0; i < MAX_NO_OF_READER_THREADS;i++) {
+		readerThreadPool[i]->join();
 	}
-};
-
-class IORequest {
-	
-public:
-	int         noOfBytes;
-	std::string content;
-	
-	enum Type { READ, WRITE};
-	Type type;
-};
-
-class QueueManager {
-	std::queue<IORequest> readReqQueue;
-	std::queue<IORequest> writeReqQueue;
-	std::mutex            readQueueMtx;
-	std::mutex            writeQueueMtx;
-	int                   maxNoOfReadReq = MAX_PARALLEL_READ_REQ;
-	int                   maxNoOfWriteReq = MAX_PARALLEL_WRITE_REQ;
-
-public:
-	void addReadReq(IORequest& request);//should throw an exception if max no of READ req limit is reached
-	void addWriteReq(IORequest& request);//should thrown an exception if max no of WRITE req limit is reached
-	IORequest& getReadReq();
-	IORequest& getWriteReq();
-	int getWriteReqCurrentSize();
-	int getReadReqCurrentSize();
-};
-
-void QueueManager::addReadReq(IORequest& request)//should throw an exception if max no of READ req limit is reached
-{
-	std::lock_guard<std::mutex> lock(readQueueMtx);//Aquire mutex before we access the queue
-	if(readReqQueue.size() < maxNoOfReadReq) {
-		readReqQueue.push(request);
-	}//else throw an exception
-}
-void QueueManager::addWriteReq(IORequest& request);//should thrown an exception if max no of WRITE req limit is reached
-{
-	std::lock_guard<std::mutex> lock(writeQueueMtx);
-	writeReqQueue.push(request); //We can put a limit if needed
-}
-IORequest& QueueManager::getReadReq() {
-	
-	std::lock_guard<std::mutex> lock(readQueueMtx);//Aquire mutex before we access the queue
-	IORequest& request = readReqQueue.front();
-	readReqQueue.pop();
-	return request;
+	writerThread->join();
 }
 
-IORequest& QueueManager::getWriteReq() {
-
-	std::lock_guard<std::mutex> lock(writeQueueMtx);
-	IORequest& request = writeReqQueue.front();
-	writeReqQueue.pop();
-	return request;
-}
-
-int QueueManager::getWriteReqCurrentSize() {
-
-	std::lock_guard<std::mutex> lock(writeQueueMtx);
-	return writeReqQueue.size();
-}
-
-int QueueManager::getReadReqCurrentSize() {
-	std::lock_guard<std::mutex> lock(readQueueMtx);//Aquire mutex before we access the queue
-	return readReqQueue.size();
-}
 

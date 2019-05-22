@@ -9,6 +9,8 @@ public:
 	virtual int  write(std::string buff) = 0;
 	virtual int  read(int noOfBytesToRead, std::string& buff) = 0;
  	virtual bool isOpen() = 0;
+	void         setId(std::string id) { this->id = id; }
+	std::string  getId() { return id; }
 };
 
 
