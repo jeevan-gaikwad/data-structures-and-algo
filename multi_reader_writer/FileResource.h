@@ -15,6 +15,7 @@ public:
 	FileResource(std::string name) {
 		setId(name);
 	}
+	~FileResource();
 	bool open();//Open a file. Throwns an exception if open fails
 	int  write(std::string buff);
 	int  read(int noOfBytesToRead, std::string&  buff);

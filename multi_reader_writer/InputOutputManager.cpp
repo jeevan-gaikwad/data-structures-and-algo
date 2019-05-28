@@ -19,16 +19,20 @@ InputOutputManager::InputOutputManager(int resourceType, std::string id) {
 		//Initialize a pool of reader and writer threads which would poll our queues
 		createReaderThreads();
 		createWriterThreads();
-		//std::thread wait(&InputOutputManager::waitForAllThreadsToFinish, this);
-		//wait.join();
+		//Create job manager to perform task management
+		jobManager = std::make_shared<JobManager>();
 }
 
 InputOutputManager::~InputOutputManager() {
-	waitForAllThreadsToFinish();
+
+	waitForAllThreadsToFinish(); //This will ensure that, we gracefull handle termination of our thread pool
+
 }
 	
 bool InputOutputManager::open()  { // should throw an exception if there is an error while opening the resource
+
             return resource->open();
+
 }
 
 int  InputOutputManager::write(std::string buff) {
@@ -63,7 +67,7 @@ void InputOutputManager::processReadRequest() {
 					resource->read(readReq.noOfBytes, readReq.content);
 				}
 			} else {
-				std::cout<<"Nothing in the queue..sleeping for few seconds"<<std::endl;
+				std::cout<<"ReaderReq: Nothing in the queue..sleeping for few seconds"<<std::endl;
 				std::this_thread::sleep_for(std::chrono::seconds(3));//sleep if nothing to be processed in the queue
 			}
 		}
@@ -72,10 +76,10 @@ void InputOutputManager::processReadRequest() {
 	
 	//thread function to actually perform read opeation
 void InputOutputManager::processWriteRequest() {
-		 int noOfWriteReqsProcessed = 0;
-		 std::cout<<"Writer Thread started executing.."<<std::endl;
+
+		int noOfWriteReqsProcessed = 0;
 		while(true) {	
-		/*
+		
 			if(ioQueueManager->getWriteReqCurrentSize()> 0 && noOfWriteReqsProcessed > 5 ) {
 				noOfWriteReqsProcessed = 0;
 				std::this_thread::sleep_for(std::chrono::seconds(2)); //For fair share among read and write requests
@@ -83,13 +87,11 @@ void InputOutputManager::processWriteRequest() {
 				IORequest& writeReq= ioQueueManager->getWriteReq();
 				noOfWriteReqsProcessed++;
 				resource->write(writeReq.content);
+
 			}else {
 				std::cout<<"Nothing in the writer queue. Sleeping for few seconds.."<<std::endl;
 				std::this_thread::sleep_for(std::chrono::seconds(2));//sleep if nothing to be processed in the queue
-			}
-			*/
-			std::cout<<"Sleeping..."<<std::endl;
-			std::this_thread::sleep_for(std::chrono::seconds(2));
+			}	
 		}
 }
 	
@@ -104,8 +106,6 @@ void InputOutputManager::createReaderThreads() {
 void InputOutputManager::createWriterThreads() {
 		//create single thread to perform write operation and pass processWriteRequest function as t_func.
 		writerThread = std::make_shared<std::thread>(&InputOutputManager::processWriteRequest, this); //we just need single thread to perform write operation.1 at a time.
-		//writerThread = new std::thread(&InputOutputManager::processWriteRequest, this);
-		//writerThread->join();
 		std::cout<<"Writer thread created successfully"<<std::endl;
 		
 }

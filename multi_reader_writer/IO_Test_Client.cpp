@@ -17,22 +17,26 @@ int main(void) {
 			std::cout<<"Exception occurred while initialzing InputOutputManager:Cause:"<<e.what()<<std::endl;
 		}
 		std::cout<<"In main. InputOutputManager initialized successfully"<<std::endl;
-		std::thread t(sample_thread_fun);
-		/*	
+
 		if(io->open()) {
 			std::cout<<"File opened successfully."<<std::endl;
 		}else {
 			std::cout<<"Failed to open the file."<<std::endl;
 		}
-		*/
-		std::string buff("Hello world!"), emptyBuff;
+		std::string buff("Hello world!\n"), emptyBuff;
+
+		//io->write(buff);
+		
+		std::string buff2("-----How you are doing?\n");
+		io->write(buff2);
+		io->write(buff2);
 		/*
-		io->write(buff);
-		io->write(buff);
 		int noOfBytesread = io->read(6, emptyBuff);
 		noOfBytesread = io->read(6, emptyBuff);
 		noOfBytesread = io->read(6, emptyBuff);
 		*/
 		//I can have multiple thread/program which can call above write and read on io object. InputOut class should ensure that client get the services.
+		std::thread t(sample_thread_fun);
+		t.join();
 	return 0;
 }

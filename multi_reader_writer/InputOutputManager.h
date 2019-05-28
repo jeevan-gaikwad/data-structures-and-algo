@@ -6,6 +6,7 @@
 #include<thread>
 #include"Resource.h"
 #include"QueueManager.h"
+#include"JobManager.h"
 
 #define TYPE_FILE 1
 #define TYPE_PIPE 2
@@ -20,6 +21,7 @@ private:
     std::shared_ptr<QueueManager> ioQueueManager;
 	std::shared_ptr<std::thread>  readerThreadPool[MAX_NO_OF_READER_THREADS]; 
 	std::shared_ptr<std::thread>  writerThread; 
+	std::shared_ptr<JobManager>    jobManager;
 public:
 
 	InputOutputManager(int resourceType, std::string id);
