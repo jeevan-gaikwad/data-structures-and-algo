@@ -3,20 +3,10 @@
 #include<iostream>
 #include<queue>
 #include<mutex>
+#include"IORequest.h"
 
 #define MAX_PARALLEL_READ_REQ 10
 #define MAX_PARALLEL_WRITE_REQ 1
-
-class IORequest {
-	
-public:
-	int         noOfBytes;
-	std::string content;
-	
-	enum Type { READ, WRITE};
-	Type type;
-};
-
 
 class QueueManager {
 	std::queue<IORequest> readReqQueue;

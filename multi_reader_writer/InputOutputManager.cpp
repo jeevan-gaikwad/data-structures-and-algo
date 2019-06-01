@@ -5,27 +5,28 @@
 #include"FileResource.h"
 
 InputOutputManager::InputOutputManager(int resourceType, std::string id) {
-		ioQueueManager = std::make_shared<QueueManager>();
+		globalExecutionStatus  = std::make_shared<GlobalExecutionStatus>();
+		jobManager = std::make_shared<JobManager>();
+
 		switch(resourceType) {
 			case TYPE_FILE:
 				 resource = std::make_shared<FileResource>(id);
 					break;
 			case TYPE_PIPE:
+				// Unimplemented
 					break;
 			
 			default: //throw InvalidResourceTypeException()			
 				break;
 		}
 		//Initialize a pool of reader and writer threads which would poll our queues
-		createReaderThreads();
-		createWriterThreads();
-		//Create job manager to perform task management
-		jobManager = std::make_shared<JobManager>();
+		//createReaderThreads();
+		//createWriterThreads();
 }
 
 InputOutputManager::~InputOutputManager() {
 
-	waitForAllThreadsToFinish(); //This will ensure that, we gracefull handle termination of our thread pool
+	//waitForAllThreadsToFinish(); //This will ensure that, we gracefull handle termination of our thread pool
 
 }
 	
@@ -35,23 +36,32 @@ bool InputOutputManager::open()  { // should throw an exception if there is an e
 
 }
 
-int  InputOutputManager::write(std::string buff) {
-			IORequest writeReq;
-			writeReq.type = IORequest::Type::WRITE;
-			writeReq.noOfBytes = buff.length();
-			writeReq.content = buff;
-            ioQueueManager->addWriteReq(writeReq);
-}
-
 int  InputOutputManager::read(int noOfBytesToRead, std::string& buff)
 {
-        IORequest readReq;
-		readReq.type = IORequest::Type::READ;
-		readReq.noOfBytes = noOfBytesToRead;
-		readReq.content = buff;
-        ioQueueManager->addReadReq(readReq);    
+    IORequest readReq;
+	readReq.type = IORequest::Type::READ;
+	readReq.noOfBytes = noOfBytesToRead;
+	readReq.content = buff;
+    jobManager->createJob(readReq);    
 }
 	
+int  InputOutputManager::write(std::string buff) {
+
+	IORequest writeReq;
+	writeReq.type = IORequest::Type::WRITE;
+	writeReq.noOfBytes = buff.length();
+	writeReq.content = buff;
+	writeReq.resource = resource; // Write operation would be performed on this request
+
+	jobManager->createJob(writeReq);
+}
+
+
+const Job& getJobExecInfo(jobid_t jobId) {
+	return jobManager->getJob(jobId);//Throw JobNotFound exception
+
+}
+/*
 //thread function to actually perform read opeation
 void InputOutputManager::processReadRequest() {
 		static int noOfReadReqsProcessed = 0;
@@ -118,4 +128,4 @@ void InputOutputManager::waitForAllThreadsToFinish() {
 	writerThread->join();
 }
 
-
+*/
