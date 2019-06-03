@@ -8,18 +8,22 @@
 class GlobalExecutionStatus {
 
 private: 
-	std::shared_ptr<std::map<jobid_t, std::shared_ptr<Job> >> jobsMap;//we can also use unordered map for performance, but in future if we start supporting an API like getAllJobs, then it wont be possible through std::map
+	std::shared_ptr<std::map<jobid_t, Job>> jobsMap;//we can also use unordered map for performance, but in future if we start supporting an API like getAllJobs, then it wont be possible through std::map
 	std::mutex jobsMap_mtx;
 
 	bool isShuttingDown; //Need to have explicit synchronization mechanism for this instead of local lock_gurad
+	std::mutex isShuttingDown_mtx;
 
 	/*Following isWriteOperationInProgress, noOfReadOperationsInProgress  and noOfWriteOperationsPerformed are used to avoid startvation of the requests. And JobSchedular uses these variables. */
 
 	bool isWriteOperationInProgress;
+	std::mutex isWriteOperationInProgress_mtx;
 
 	int  noOfReadOperationsInProgress;
+	std::mutex noOfReadOperationsInProgress_mtx;
 
 	int  noOfWriteOperationsPerformed;
+	std::mutext noOfWriteOperationsPerformed_mtx;
 
 public:
 	void setIsShuttingDown(bool isShuttingDown);
@@ -29,9 +33,10 @@ public:
 	bool getIsWriteOperationInProgress();
 
 	void incrementNoOfReadOperationsInProgressByOne();
-	void derementNoOfReadOperationsInProgressByOne();
+	void decrementNoOfReadOperationsInProgressByOne();
 
 	void incrementNoOfWriteOperationsPerformed();
 	void decrementNoOfWriteOperationsPerformed();
 };
+
 #endif
