@@ -2,8 +2,19 @@
 #include "JobExecutor.h"
 
 JobExecutor::JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus) {
-		jobExecutionQueue = std::make_shared<std::queue<Job>>();
-		this->globalExecutionStatus = globalExecutionStatus;
+	jobExecutionQueue = std::make_shared<std::queue<Job>>();
+	this->globalExecutionStatus = globalExecutionStatus;
+	workQueueFilled_cond = std::make_shared<std::condition_variable>();
+	workQueueFilled_cond_mtx = std::make_shared<std::mutex>();
+
+	//Register our intterest in shutdown event
+	EventListener shutdownEventListener;
+	shutdownEventListener.eventType = EventType::SHUTDOWN;
+	shutdownEventListener.condition_var = workQueueFilled_cond;
+	shutdownEventListener.condition_var_mtx = workQueueFilled_cond_mtx;
+	
+	globalExecutionStatus->registerEventListener(shutdownEventListener);
+
 
 	//create threads
 	for(int itr=0; itr < MAX_NO_OF_THREADS; itr++) {
@@ -18,13 +29,18 @@ void JobExecutor::addJobForExecution(Job& job) {
 	enQueue(job);
 	
 	//wakeup all threads waiting for work
-	std::lock_guard<std::mutex> lock(workQueueFilled_cond_mtx);
-	workQueueFilled_cond.notify_all();
+	std::lock_guard<std::mutex> lock(*workQueueFilled_cond_mtx);
+	workQueueFilled_cond->notify_all();
 }
 
 bool JobExecutor::isWorkQueueCondMet() {//For spurious wakup
 
-	if(getExecQueueSize() > 0 && globalExecutionStatus->getIsShuttingDown() == false) {
+	std::cout<<"JobExecutor::isWorkQueueCondMet: I woke up"<<std::endl;
+	if(globalExecutionStatus->getIsShuttingDown() == true) {
+		return true;
+	}
+
+	if(getExecQueueSize() > 0) {
 		return true;
 	}else {
 		return false;
@@ -34,8 +50,8 @@ bool JobExecutor::isWorkQueueCondMet() {//For spurious wakup
 void JobExecutor::executeJob() {
 	Job job;
 	while(true) {
-		std::unique_lock<std::mutex> lock(workQueueFilled_cond_mtx);
-		workQueueFilled_cond.wait(lock,std::bind(&JobExecutor::isWorkQueueCondMet, this));
+		std::unique_lock<std::mutex> lock(*workQueueFilled_cond_mtx);
+		workQueueFilled_cond->wait(lock,std::bind(&JobExecutor::isWorkQueueCondMet, this));
 		
 		if(globalExecutionStatus->getIsShuttingDown() == true) {
 			std::cout<<"Worker thread exiting. System is shutting down."<<std::endl;

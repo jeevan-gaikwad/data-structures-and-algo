@@ -5,8 +5,19 @@ GlobalExecutionStatus::GlobalExecutionStatus() {
 }
 
 void GlobalExecutionStatus::setIsShuttingDown(bool isShuttingDown) {
-	std::lock_guard<std::mutex> lock(isShuttingDown_mtx);
+	std::unique_lock<std::mutex> lock(isShuttingDown_mtx);
 	this->isShuttingDown = isShuttingDown;
+	lock.unlock();
+	//notify all shutdown event listeners
+	std::vector<EventListener>::iterator itr = eventListeners.begin();
+	for(; itr != eventListeners.end(); itr++) {
+		EventListener& eventLister = *itr;
+		if(eventLister.eventType == EventType::SHUTDOWN) {
+			std::lock_guard<std::mutex> lock(*(eventLister.condition_var_mtx));
+			eventLister.condition_var->notify_all();
+			std::cout<<"Notified all shutdown event listeners.."<<std::endl;
+		}
+	}
 }
 
 bool GlobalExecutionStatus::getIsShuttingDown() {

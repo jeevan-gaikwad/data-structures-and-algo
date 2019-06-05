@@ -16,8 +16,8 @@ private:
 	std::shared_ptr<JobExecutor> jobExecutor;
 	std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus;
 	std::shared_ptr<std::thread> schedularThread;
-	std::condition_variable run_schedular_cond;
-	std::mutex run_schedular_cond_mtx;
+	std::shared_ptr<std::condition_variable> run_schedular_cond;
+	std::shared_ptr<std::mutex> run_schedular_cond_mtx;
 
 	//internal functions
 	void runSchedular();

@@ -15,13 +15,7 @@ public:
 	std::shared_ptr<std::condition_variable> condition_var;
 	std::shared_ptr<std::mutex> condition_var_mtx;
 	EventType eventType; //we can have Event as a seperate struct to store more information about an event
-	/*
-	EventListener(EventListener& eventListener) {
-		this->condition_var = eventListener.condition_var;
-		this->condition_var_mtx = eventListener.condition_var_mtx;
-		this->eventType = eventListener.eventType;
-	}
-	*/
+	
 };
 
 class GlobalExecutionStatus {

@@ -19,8 +19,8 @@ private:
 	std::shared_ptr<std::queue<Job>> jobExecutionQueue;
 	std::mutex jobExecutionQueue_mtx;
 	
-	std::condition_variable workQueueFilled_cond;
-	std::mutex workQueueFilled_cond_mtx;
+	std::shared_ptr<std::condition_variable> workQueueFilled_cond;
+	std::shared_ptr<std::mutex> workQueueFilled_cond_mtx;
 	
 	//Internal functions
 	void executeJob();
