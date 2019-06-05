@@ -4,7 +4,7 @@
 void sample_thread_fun() {
 
 	while(true) {
-		std::cout<<"Sample thread func...sleeping for 2s"<<std::endl;
+		//std::cout<<"Sample thread func...sleeping for 2s"<<std::endl;
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 
@@ -28,8 +28,8 @@ int main(void) {
 		//io->write(buff);
 		
 		std::string buff2("-----How you are doing?\n");
-		io->write(buff2);
-		io->write(buff2);
+		io->write(buff);
+		//io->write(buff2);
 		/*
 		int noOfBytesread = io->read(6, emptyBuff);
 		noOfBytesread = io->read(6, emptyBuff);

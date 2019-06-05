@@ -4,18 +4,26 @@
 #include<iostream>
 #include<queue>
 #include<memory>
+#include<mutex>
+#include<thread>
 #include"Job.h"
 #include"GlobalExecutionStatus.h"
-#include<mutex>
+
+const int MAX_NO_OF_THREADS = 5;
 
 class JobExecutor {
 private:
 	std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus;
 	std::shared_ptr<std::queue<Job>> jobExecutionQueue;
 	std::mutex jobExecutionQueue_mtx;
-	void executeJob(Job& job);
+	void executeJob();
 	void enQueue(Job& job);
 	void deQueue(Job& job); //job is out param
+	int  getExecQueueSize();
+
+	//Now here, we'll have thread pool to pick jobs from the queue. 
+
+	std::shared_ptr<std::thread> workderThreadPool[MAX_NO_OF_THREADS];
 
 public: 
 	JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus); 

@@ -6,13 +6,12 @@
 #include"JobExecutor.h"
 #include"QueueManager.h"
 
+
 class JobSchedular {
 
 private:
 
     std::shared_ptr<QueueManager> ioQueueManager;
-	//Now here, we'll have thread pool to pick jobs from the queue. To add ajob in the 
-	//thread pool, we need a sheduling policy
 	std::shared_ptr<JobExecutor> jobExecutor;
 	std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus;
 

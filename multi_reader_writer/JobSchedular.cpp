@@ -4,7 +4,8 @@
 JobSchedular::JobSchedular(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus) {
 	ioQueueManager = std::make_shared<QueueManager>();
 	jobExecutor = std::make_shared<JobExecutor>(globalExecutionStatus);
-	globalExecutionStatus = globalExecutionStatus;
+	this->globalExecutionStatus = globalExecutionStatus;
+
 }
 
 
@@ -34,8 +35,10 @@ void JobSchedular::addJobForScheduling(Job& job) {
 	}//else throw an exception InvalidJobType
 	
 	//Update Global execution status for job status
-	globalExecutionStatus->getJobExecStatusMap()->insert(std::pair<jobid_t, Job>(job.getJobId(), job));
+	std::shared_ptr<std::map<jobid_t, Job>> map = globalExecutionStatus->getJobExecStatusMap();
 
+	map->insert(std::pair<jobid_t, Job>(job.getJobId(), job));
+	std::cout<<"Job is added to I/O req queue. Running a schedular"<<std::endl;
 	runSchedular();//New job is added into the Queue. Run schedular
 }
 
