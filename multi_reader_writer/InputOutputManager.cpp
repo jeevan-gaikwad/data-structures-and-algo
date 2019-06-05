@@ -32,8 +32,7 @@ InputOutputManager::~InputOutputManager() {
 	
 bool InputOutputManager::open()  { // should throw an exception if there is an error while opening the resource
 
-            return resource->open();
-
+    return resource->open();
 }
 
 jobid_t  InputOutputManager::read(int noOfBytesToRead, std::string& buff)

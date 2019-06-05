@@ -54,3 +54,9 @@ Job GlobalExecutionStatus::getJob(jobid_t jobid) {
 std::shared_ptr<std::map<jobid_t, Job>> 	GlobalExecutionStatus::getJobExecStatusMap() {
 	return jobsMap;	
 }
+
+
+void GlobalExecutionStatus::registerEventListener(EventListener& eventListener) {
+	eventListeners.push_back(eventListener);
+}
+

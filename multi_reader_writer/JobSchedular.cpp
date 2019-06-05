@@ -1,4 +1,5 @@
 #include<iostream>
+#include<functional>
 #include"JobSchedular.h"
 
 JobSchedular::JobSchedular(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus) {
@@ -6,21 +7,44 @@ JobSchedular::JobSchedular(std::shared_ptr<GlobalExecutionStatus> globalExecutio
 	jobExecutor = std::make_shared<JobExecutor>(globalExecutionStatus);
 	this->globalExecutionStatus = globalExecutionStatus;
 
+	//Run a schedular thread
+	schedularThread = std::make_shared<std::thread>(&JobSchedular::runSchedular, this);
 }
 
+bool JobSchedular::isSchedularCondMet() { //For Spurious wakeup
+	if(globalExecutionStatus->getIsShuttingDown() == false && 
+	(ioQueueManager->getWriteJobCurrentQSize() > 0 || ioQueueManager->getReadJobCurrentQSize() > 0)) {
+		return true;//Schedular should run
+	}else {
+		return false;
+	}
+}
 
 void JobSchedular::runSchedular() {
-	/* 
-		1. Ensure that only one WRITE job is running
-		2. No starvation for read/write requests
-	*/	
-	std::cout<<"Running job schedular."<<std::endl;
-	if(ioQueueManager->getWriteJobCurrentQSize() > 0) {
-		jobExecutor->addJobForExecution(ioQueueManager->getWriteJob());
-	}
+	
+	while(globalExecutionStatus->getIsShuttingDown() == false) {
 
-	if(ioQueueManager->getReadJobCurrentQSize() > 0) {
-		jobExecutor->addJobForExecution(ioQueueManager->getReadJob());
+		std::unique_lock<std::mutex> lock(run_schedular_cond_mtx);
+		run_schedular_cond.wait(lock, std::bind(&JobSchedular::isSchedularCondMet, this));
+		
+		if(globalExecutionStatus->getIsShuttingDown() == true) { //This is to ensure that after waking up, system is NOT shutting down
+			std::cout<<"System is shutting down. Terminating schedular thread."<<std::endl;
+			break;
+		}
+
+		/* 
+			1. Ensure that only one WRITE job is running
+			2. No starvation for read/write requests
+		*/	
+		std::cout<<"Running job schedular."<<std::endl;
+		if(ioQueueManager->getWriteJobCurrentQSize() > 0) {
+			jobExecutor->addJobForExecution(ioQueueManager->getWriteJob());
+		}
+
+		if(ioQueueManager->getReadJobCurrentQSize() > 0) {
+			jobExecutor->addJobForExecution(ioQueueManager->getReadJob());
+		}
+
 	}
 }
 
@@ -39,6 +63,12 @@ void JobSchedular::addJobForScheduling(Job& job) {
 
 	map->insert(std::pair<jobid_t, Job>(job.getJobId(), job));
 	std::cout<<"Job is added to I/O req queue. Running a schedular"<<std::endl;
-	runSchedular();//New job is added into the Queue. Run schedular
+	//New job is added into the Queue. Notify schedular
+	std::lock_guard<std::mutex> lock(run_schedular_cond_mtx);
+	run_schedular_cond.notify_one();//We've only one thread for Schedular
+
 }
 
+JobSchedular::~JobSchedular() {
+	schedularThread->join();
+}

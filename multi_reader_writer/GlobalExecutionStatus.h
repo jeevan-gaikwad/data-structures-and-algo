@@ -1,14 +1,34 @@
 #ifndef _GLOBAL_EXEC_STS_H_
 #define _GLOBAL_EXEC_STS_H_
-#include<iostream>
-#include<memory>
-#include<mutex>
-#include<map>
-#include"Job.h"
+#include <iostream>
+#include <memory>
+#include <condition_variable>
+#include <mutex>
+#include <map>
+#include <vector>
+#include "Job.h"
+
+enum EventType { SHUTDOWN };
+
+class EventListener {
+public:
+	std::shared_ptr<std::condition_variable> condition_var;
+	std::shared_ptr<std::mutex> condition_var_mtx;
+	EventType eventType; //we can have Event as a seperate struct to store more information about an event
+	/*
+	EventListener(EventListener& eventListener) {
+		this->condition_var = eventListener.condition_var;
+		this->condition_var_mtx = eventListener.condition_var_mtx;
+		this->eventType = eventListener.eventType;
+	}
+	*/
+};
 
 class GlobalExecutionStatus {
 
 private: 
+
+	std::vector<EventListener> eventListeners; //We can have a map<EventType, std::vector<EventListeners> >
 	std::shared_ptr<std::map<jobid_t, Job>> jobsMap;//we can also use unordered map for performance, but in future if we start supporting an API like getAllJobs, then it wont be possible through std::map
 	std::mutex jobsMap_mtx;
 
@@ -41,6 +61,7 @@ public:
 	void decrementNoOfWriteOperationsPerformed();
 	Job  getJob(jobid_t id);
 	std::shared_ptr<std::map<jobid_t, Job>> 	getJobExecStatusMap();
+	void registerEventListener(EventListener& eventListener);
 };
 
 #endif

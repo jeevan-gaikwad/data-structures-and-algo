@@ -11,7 +11,8 @@ JobManager::JobManager(std::shared_ptr<GlobalExecutionStatus> globalExecutionSta
 jobid_t JobManager::createJob(IORequest& ioRequest) {
 
 	std::unique_lock<std::mutex> jobidLock(currentJobId_mtx);
-	jobid_t newJobId = currentJobId + 1;
+	currentJobId++;
+	jobid_t newJobId = currentJobId;
 	jobidLock.unlock();
 
 	Job newJob;
@@ -22,7 +23,7 @@ jobid_t JobManager::createJob(IORequest& ioRequest) {
 	std::time_t now;
 	std::time(&now);
 	newJob.setStartTime(now);
-	std::cout<<"New job is created. Adding for scheduling.."<<std::endl;
+	std::cout<<"New job is created id:"<<newJobId<<". Adding for scheduling.."<<std::endl;
 	jobSchedular->addJobForScheduling(newJob);
 	return newJobId;
 }

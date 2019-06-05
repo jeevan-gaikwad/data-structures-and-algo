@@ -8,6 +8,7 @@ void sample_thread_fun(std::shared_ptr<InputOutputManager> ioManager) {
 		//std::cout<<"Sample thread func...sleeping for 2s"<<std::endl;
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
+
 	std::cout<<"Main: Done with 5 iterations. Setting shutting down flag."<<std::endl;
 	ioManager->setShuttingDownFlag();
 }
@@ -31,7 +32,10 @@ int main(void) {
 		//io->write(buff);
 		
 		std::string buff2("-----How you are doing?\n");
-		io->write(buff);
+		jobid_t id1 = io->write(buff);
+		std::cout<<"Write req submitted successfully. Job id is:"<<id1<<std::endl;
+		jobid_t id2 = io->write(buff);
+		std::cout<<"2nd Write req submitted successfully. Job id is:"<<id2<<std::endl;
 		//io->write(buff2);
 		/*
 		int noOfBytesread = io->read(6, emptyBuff);
