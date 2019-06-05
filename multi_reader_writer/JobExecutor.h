@@ -28,6 +28,7 @@ private:
 public: 
 	JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus); 
 	void addJobForExecution(Job& job);
+	~JobExecutor(); //Wait for all worker threads to finish
 
 };
 #endif

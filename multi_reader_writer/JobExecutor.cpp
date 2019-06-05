@@ -3,7 +3,7 @@
 
 JobExecutor::JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus) {
 		jobExecutionQueue = std::make_shared<std::queue<Job>>();
-		globalExecutionStatus = globalExecutionStatus;
+		this->globalExecutionStatus = globalExecutionStatus;
 
 	//create threads
 	for(int itr=0; itr < MAX_NO_OF_THREADS; itr++) {
@@ -23,8 +23,8 @@ void JobExecutor::addJobForExecution(Job& job) {
 void JobExecutor::executeJob() {
 	Job job;
 	while(true) {
-		std::cout<<"Checking for worker Q size.."<<std::endl;
-		if(getExecQueueSize() > 0) {
+		std::cout<<"Checking for worker Q size and Shutdown signal.."<<std::endl;
+		if(getExecQueueSize() > 0 && globalExecutionStatus->getIsShuttingDown() == false) {
 			deQueue(job);
 			std::cout<<"JobExecutor: Jod "<<job.getJobId()<<" picked from the queue successfully!"<<std::endl;
 			job.setStatus(job_status_t::IN_PROGRESS);
@@ -44,6 +44,10 @@ void JobExecutor::executeJob() {
 			std::cout<<"Job executed successfully!"<<std::endl;
 			//Handle error cases too
 		}else {
+			if(globalExecutionStatus->getIsShuttingDown() == true) {
+				std::cout<<"System is shutting down..exiting.."<<std::endl;
+				break;
+			}
 			std::this_thread::sleep_for(std::chrono::seconds(2));
 		}
 	}
@@ -65,7 +69,7 @@ int  JobExecutor::getExecQueueSize() {
 	return jobExecutionQueue->size();
 }
 
-~JobExecutor::JobExecutor() {
+JobExecutor::~JobExecutor() {
 	//Wait for all threads to finish
 	for(int itr = 0; itr < MAX_NO_OF_THREADS; itr++) {
 		workderThreadPool[itr]->join();

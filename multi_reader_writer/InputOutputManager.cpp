@@ -61,6 +61,9 @@ const Job InputOutputManager::getJobExecInfo(jobid_t jobId) {
 	return jobManager->getJob(jobId);//Throw JobNotFound exception
 
 }
+void InputOutputManager::setShuttingDownFlag() {
+	globalExecutionStatus->setIsShuttingDown(true);
+}
 /*
 //thread function to actually perform read opeation
 void InputOutputManager::processReadRequest() {
