@@ -1,12 +1,12 @@
 #ifndef _INPUT_OUTPUT_MANAGER
 #define _INPUT_OUTPUT_MANAGER
-#include<iostream>
-#include<mutex>
-#include<memory>
-#include<thread>
-#include"Resource.h"
-#include"JobManager.h"
-#include"GlobalExecutionStatus.h"
+#include <iostream>
+#include <mutex>
+#include <memory>
+#include <thread>
+#include "Resource.h"
+#include "JobManager.h"
+#include "GlobalExecutionStatus.h"
 
 #define TYPE_FILE 1
 #define TYPE_PIPE 2
@@ -30,7 +30,7 @@ public:
 	bool open();
 	jobid_t  write(std::string buff);
 	jobid_t  read(int noOfBytesToRead, std:: string& buff);
-	const Job& getJobExecInfo(jobid_t jobId);
+	const Job getJobExecInfo(jobid_t jobId); //see if we can return Job&
 
 private:
 	/*

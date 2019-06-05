@@ -10,15 +10,18 @@ using jobid_t = long int;
 
 class Job {
 
+public:
+	enum Status { QUEUED, IN_PROGRESS, COMPLETED, ERROR};
+
 private:
 	jobid_t id;
 	float progressPercentage;
 	std::time_t startTime, completionTime;
-	std::IORequest ioRequest;
-	enum Status { QUEUED, IN_PROGRESS, COMPLETED, ERROR};
+	IORequest ioRequest;
 	Status status;
 
 public:
+
 	Job() { }
 	Job(jobid_t id, float progressPercentage, std::time_t startTime,std::time_t completionTime, IORequest& ioRequest):
 	id(id), progressPercentage(progressPercentage), startTime(startTime), completionTime(completionTime), ioRequest(ioRequest) { }
@@ -39,7 +42,7 @@ public:
 	IORequest&  getIORequest() { return ioRequest; }
 	void 	    setIORequest(IORequest& ioRequest) { this->ioRequest = ioRequest; }
 	
-	void        setStatus(Status& status) { this->status = status; }
+	void        setStatus(Status status) { this->status = status; }
 	Status		getStatus() { this->status; }
 };
 //aliases

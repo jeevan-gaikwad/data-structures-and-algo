@@ -1,47 +1,47 @@
-#include"QueueManager.h"
+#include "QueueManager.h"
 
-void QueueManager::addReadReq(IORequest& request)//should throw an exception if max no of READ req limit is reached
+void QueueManager::addReadJob(Job& job)//should throw an exception if max no of READ req limit is reached
 {
 	std::lock_guard<std::mutex> lock(readQueueMtx);//Aquire mutex before we access the queue
-	if(readReqQueue.size() < maxNoOfReadReq) {
-		readReqQueue.push(request);
-		std::cout<<"Read request added successfully."<<std::endl;
-		std::cout<<"Read queue size is:"<<readReqQueue.size()<<std::endl;
+	if(readJobQueue.size() < maxNoOfReadJob) {
+		readJobQueue.push(job);
+		//std::cout<<"Read job added successfully."<<std::endl;
+		//std::cout<<"Read queue size is:"<<readJobQueue.size()<<std::endl;
 	}//else throw an exception
 }
 
-void QueueManager::addWriteReq(IORequest& request)//should thrown an exception if max no of WRITE req limit is reached
+void QueueManager::addWriteJob(Job& job)//should thrown an exception if max no of WRITE req limit is reached
 {
 	std::lock_guard<std::mutex> lock(writeQueueMtx);
-	writeReqQueue.push(request); //We can put a limit if needed
-	std::cout<<"write request added successfully for:"<<request.content<<std::endl;
-	std::cout<<"Write queue size is:"<<writeReqQueue.size()<<std::endl;
+	writeJobQueue.push(job); //We can put a limit if needed
+	//std::cout<<"write job added successfully for:"<<job.content<<std::endl;
+	//std::cout<<"Write queue size is:"<<writeJobQueue.size()<<std::endl;
 }
 
-IORequest& QueueManager::getReadReq() {
+Job& QueueManager::getReadJob() {
 	
 	std::lock_guard<std::mutex> lock(readQueueMtx);//Aquire mutex before we access the queue
-	IORequest& request = readReqQueue.front();
-	readReqQueue.pop();
-	return request;
+	Job& job = readJobQueue.front();
+	readJobQueue.pop();
+	return job;
 }
 
-IORequest& QueueManager::getWriteReq() {
+Job& QueueManager::getWriteJob() {
 
 	std::lock_guard<std::mutex> lock(writeQueueMtx);
-	IORequest& request = writeReqQueue.front();
-	writeReqQueue.pop();
-	return request;
+	Job& job = writeJobQueue.front();
+	writeJobQueue.pop();
+	return job;
 }
 
-int QueueManager::getWriteReqCurrentSize() {
+int QueueManager::getWriteJobCurrentQSize() {
 
 	std::lock_guard<std::mutex> lock(writeQueueMtx);
-	return writeReqQueue.size();
+	return writeJobQueue.size();
 }
 
-int QueueManager::getReadReqCurrentSize() {
+int QueueManager::getReadJobCurrentQSize() {
 	std::lock_guard<std::mutex> lock(readQueueMtx);//Aquire mutex before we access the queue
-	return readReqQueue.size();
+	return readJobQueue.size();
 }
 

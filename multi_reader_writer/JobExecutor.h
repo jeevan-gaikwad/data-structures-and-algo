@@ -12,16 +12,13 @@ class JobExecutor {
 private:
 	std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus;
 	std::shared_ptr<std::queue<Job>> jobExecutionQueue;
+	std::mutex jobExecutionQueue_mtx;
 	void executeJob(Job& job);
 	void enQueue(Job& job);
 	void deQueue(Job& job); //job is out param
 
 public: 
-	JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus) {
-		jobExecutionQueue = std::make_shared<std::queue<Job>>();
-		globalExecutionStatus = globalExecutionStatus;
-	}
-
+	JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus); 
 	void addJobForExecution(Job& job);
 
 };

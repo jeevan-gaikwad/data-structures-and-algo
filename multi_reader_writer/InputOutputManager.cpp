@@ -6,7 +6,7 @@
 
 InputOutputManager::InputOutputManager(int resourceType, std::string id) {
 		globalExecutionStatus  = std::make_shared<GlobalExecutionStatus>();
-		jobManager = std::make_shared<JobManager>();
+		jobManager = std::make_shared<JobManager>(globalExecutionStatus);
 
 		switch(resourceType) {
 			case TYPE_FILE:
@@ -36,16 +36,16 @@ bool InputOutputManager::open()  { // should throw an exception if there is an e
 
 }
 
-int  InputOutputManager::read(int noOfBytesToRead, std::string& buff)
+jobid_t  InputOutputManager::read(int noOfBytesToRead, std::string& buff)
 {
     IORequest readReq;
 	readReq.type = IORequest::Type::READ;
 	readReq.noOfBytes = noOfBytesToRead;
 	readReq.content = buff;
-    jobManager->createJob(readReq);    
+    return jobManager->createJob(readReq);  //returns jobid
 }
 	
-int  InputOutputManager::write(std::string buff) {
+jobid_t  InputOutputManager::write(std::string buff) {
 
 	IORequest writeReq;
 	writeReq.type = IORequest::Type::WRITE;
@@ -53,11 +53,11 @@ int  InputOutputManager::write(std::string buff) {
 	writeReq.content = buff;
 	writeReq.resource = resource; // Write operation would be performed on this request
 
-	jobManager->createJob(writeReq);
+	return jobManager->createJob(writeReq); //returns jobid
 }
 
 
-const Job& getJobExecInfo(jobid_t jobId) {
+const Job InputOutputManager::getJobExecInfo(jobid_t jobId) {
 	return jobManager->getJob(jobId);//Throw JobNotFound exception
 
 }

@@ -11,11 +11,12 @@ class JobManager {
 
 	std::shared_ptr<JobSchedular> jobSchedular;
 	jobid_t currentJobId;
+	std::mutex currentJobId_mtx;
 
 public:
-	JobManager();	
+	JobManager(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus);	
 	jobid_t 				createJob(IORequest& ioRequest);
-	std::shared_ptr<Job>&   getJob(jobid_t id);
+	const Job    getJob(jobid_t id);
 	job_status_t		    deleteJob(jobid_t id);//Should Throw JobNotFound exception
 	std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus;
 };

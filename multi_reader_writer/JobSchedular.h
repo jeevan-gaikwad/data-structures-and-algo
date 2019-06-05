@@ -4,6 +4,7 @@
 #include<memory>
 #include"Job.h"
 #include"JobExecutor.h"
+#include"QueueManager.h"
 
 class JobSchedular {
 

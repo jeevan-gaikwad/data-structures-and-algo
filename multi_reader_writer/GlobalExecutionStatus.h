@@ -3,6 +3,7 @@
 #include<iostream>
 #include<memory>
 #include<mutex>
+#include<map>
 #include"Job.h"
 
 class GlobalExecutionStatus {
@@ -23,9 +24,10 @@ private:
 	std::mutex noOfReadOperationsInProgress_mtx;
 
 	int  noOfWriteOperationsPerformed;
-	std::mutext noOfWriteOperationsPerformed_mtx;
+	std::mutex noOfWriteOperationsPerformed_mtx;
 
 public:
+	GlobalExecutionStatus();
 	void setIsShuttingDown(bool isShuttingDown);
 	bool getIsShuttingDown();
 
@@ -37,6 +39,8 @@ public:
 
 	void incrementNoOfWriteOperationsPerformed();
 	void decrementNoOfWriteOperationsPerformed();
+	Job  getJob(jobid_t id);
+	std::shared_ptr<std::map<jobid_t, Job>> 	getJobExecStatusMap();
 };
 
 #endif

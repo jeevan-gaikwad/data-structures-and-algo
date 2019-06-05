@@ -1,3 +1,4 @@
+#include<ctime>
 #include"JobExecutor.h"
 
 JobExecutor::JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus) {
@@ -9,21 +10,23 @@ JobExecutor::JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionS
 void JobExecutor::addJobForExecution(Job& job) {
 	enQueue(job);
 	//wakeup all threads waiting for work
+	std::cout<<"JobExecutor: I should wakeup worker threads now.."<<std::endl;
 }
 
 //thread func
 void JobExecutor::executeJob(Job& job) {
-	job.setJobStatus(job_status_t::IN_PROGRESS);
+
+	job.setStatus(job_status_t::IN_PROGRESS);
 	//Check request type
 	IORequest& ioRequest = job.getIORequest();
 	std::shared_ptr<Resource> resource = ioRequest.resource;
 	if(IORequest::Type::READ == ioRequest.type) {
 		resource->write(ioRequest.content);
 		//Process part by part reading/writting and update % in the job status
-	} else if(IORequest::Type::WRITE == ioRequest.type)
-		resource.read(ioRequest.noOfBytes, ioRequest.content);	
+	} else if(IORequest::Type::WRITE == ioRequest.type) {
+		resource->read(ioRequest.noOfBytes, ioRequest.content);	
 	}
-	job.setJobStatus(job_status_t::COMPLETED);
+	job.setStatus(job_status_t::IN_PROGRESS);
 	std::time_t now;
 	std::time(&now);
 	job.setCompletionTime(now);
@@ -31,12 +34,12 @@ void JobExecutor::executeJob(Job& job) {
 }
 
 void JobExecutor::enQueue(Job& job) {
-	std::lock_guard<std::mutex> lock(jobExecutionQueue);
-	jobExecutionQueue.push(job);
+	std::lock_guard<std::mutex> lock(jobExecutionQueue_mtx);
+	jobExecutionQueue->push(job);
 }
 
 void JobExecutor::deQueue(Job& job) {
-	std::lock_guard<std::mutex> lock(jobExecutionQueue);
-	job = jobExecutionQueue.front(job);
-	jobExecutionQueue.pop();
+	std::lock_guard<std::mutex> lock(jobExecutionQueue_mtx);
+	job = jobExecutionQueue->front();
+	jobExecutionQueue->pop();
 }

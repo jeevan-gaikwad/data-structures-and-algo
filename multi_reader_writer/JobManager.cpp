@@ -9,8 +9,11 @@ JobManager::JobManager(std::shared_ptr<GlobalExecutionStatus> globalExecutionSta
 }
 
 jobid_t JobManager::createJob(IORequest& ioRequest) {
+	std::unique_lock<std::mutex> jobidLock(currentJobId_mtx);
+	jobidLock.lock();
 	jobid_t newJobId = currentJobId + 1;
-	//std::shared_ptr<Job> newJob = std::make_shared<Job>();
+	jobidLock.unlock();
+
 	Job newJob;
 	newJob.setJobId(newJobId);
 	newJob.setProgressPercentage(0.0f);
@@ -20,14 +23,11 @@ jobid_t JobManager::createJob(IORequest& ioRequest) {
 	std::time(&now);
 	newJob.setStartTime(now);
 
-	jobsExecStatus->getJobExecStatusMap()->insert(std::pair<jobid_t,std::shared_ptr<Job>>(newJobId, newJob));
 	jobSchedular->addJobForScheduling(newJob);
+	return newJobId;
 }
 
-std::shared_ptr<Job>&    getJob(jobid_t id) {
-
+const Job    JobManager::getJob(jobid_t id) {
+	return globalExecutionStatus->getJob(id);
 }
 
-void    deleteJob(jobid_t id) {
-
-}
