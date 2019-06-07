@@ -14,9 +14,10 @@
 const int MAX_NO_OF_THREADS = 5;
 
 class JobExecutor {
+
 private:
 	std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus;
-	std::shared_ptr<std::queue<Job>> jobExecutionQueue;
+	std::queue<std::shared_ptr<Job> > jobExecutionQueue;
 	std::mutex jobExecutionQueue_mtx;
 	
 	std::shared_ptr<std::condition_variable> workQueueFilled_cond;
@@ -24,8 +25,8 @@ private:
 	
 	//Internal functions
 	void executeJob();
-	void enQueue(Job& job);
-	void deQueue(Job& job); //job is out param
+	void enQueue(std::shared_ptr<Job> job);
+	std::shared_ptr<Job> deQueue();
 	int  getExecQueueSize();
 
 	bool isWorkQueueCondMet();//For spurious wakup
@@ -35,7 +36,7 @@ private:
 
 public: 
 	JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus); 
-	void addJobForExecution(Job& job);
+	void addJobForExecution(std::shared_ptr<Job> job);
 	~JobExecutor(); //Wait for all worker threads to finish
 
 };

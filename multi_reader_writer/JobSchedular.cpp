@@ -61,9 +61,9 @@ void JobSchedular::runSchedular() {
 	}
 }
 
-void JobSchedular::addJobForScheduling(Job& job) {
+void JobSchedular::addJobForScheduling(std::shared_ptr<Job> job) {
 
-	IORequest& request = job.getIORequest();
+	IORequest& request = job->getIORequest();//Return const
 	IORequest::Type reqType = request.type;
 	if(reqType == IORequest::Type::READ) {
 		ioQueueManager->addReadJob(job);
@@ -72,9 +72,7 @@ void JobSchedular::addJobForScheduling(Job& job) {
 	}//else throw an exception InvalidJobType
 	
 	//Update Global execution status for job status
-	std::shared_ptr<std::map<jobid_t, Job>> map = globalExecutionStatus->getJobExecStatusMap();
-
-	map->insert(std::pair<jobid_t, Job>(job.getJobId(), job));
+	globalExecutionStatus->insertJobIntoMap(job);//map of jobid and job
 	std::cout<<"Job is added to I/O req queue. Running a schedular"<<std::endl;
 	//New job is added into the Queue. Notify schedular
 	std::lock_guard<std::mutex> lock(*run_schedular_cond_mtx);

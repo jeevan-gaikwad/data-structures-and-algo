@@ -23,7 +23,7 @@ class GlobalExecutionStatus {
 private: 
 
 	std::vector<EventListener> eventListeners; //We can have a map<EventType, std::vector<EventListeners> >
-	std::shared_ptr<std::map<jobid_t, Job>> jobsMap;//we can also use unordered map for performance, but in future if we start supporting an API like getAllJobs, then it wont be possible through std::map
+	std::map<jobid_t, std::shared_ptr<Job> > jobsMap;//we can also use unordered map for performance, but in future if we start supporting an API like getAllJobs, then it wont be possible through std::map
 	std::mutex jobsMap_mtx;
 
 	bool isShuttingDown; //Need to have explicit synchronization mechanism for this instead of local lock_gurad
@@ -42,6 +42,7 @@ private:
 
 public:
 	GlobalExecutionStatus();
+	void insertJobIntoMap(std::shared_ptr<Job> job);
 	void setIsShuttingDown(bool isShuttingDown);
 	bool getIsShuttingDown();
 
@@ -53,9 +54,8 @@ public:
 
 	void incrementNoOfWriteOperationsPerformed();
 	void decrementNoOfWriteOperationsPerformed();
-	Job  getJob(jobid_t id);
-	std::shared_ptr<std::map<jobid_t, Job>> 	getJobExecStatusMap();
 	void registerEventListener(EventListener& eventListener);
+	const std::shared_ptr<Job>  getJob(jobid_t id);
 };
 
 #endif

@@ -1,6 +1,6 @@
 #include "QueueManager.h"
 
-void QueueManager::addReadJob(Job& job)//should throw an exception if max no of READ req limit is reached
+void QueueManager::addReadJob(std::shared_ptr<Job> job)//should throw an exception if max no of READ req limit is reached
 {
 	std::lock_guard<std::mutex> lock(readQueueMtx);//Aquire mutex before we access the queue
 	if(readJobQueue.size() < maxNoOfReadJob) {
@@ -10,7 +10,7 @@ void QueueManager::addReadJob(Job& job)//should throw an exception if max no of 
 	}//else throw an exception
 }
 
-void QueueManager::addWriteJob(Job& job)//should thrown an exception if max no of WRITE req limit is reached
+void QueueManager::addWriteJob(std::shared_ptr<Job> job)//should thrown an exception if max no of WRITE req limit is reached
 {
 	std::lock_guard<std::mutex> lock(writeQueueMtx);
 	writeJobQueue.push(job); //We can put a limit if needed
@@ -18,18 +18,18 @@ void QueueManager::addWriteJob(Job& job)//should thrown an exception if max no o
 	//std::cout<<"Write queue size is:"<<writeJobQueue.size()<<std::endl;
 }
 
-Job& QueueManager::getReadJob() {
+std::shared_ptr<Job> QueueManager::getReadJob() {
 	
 	std::lock_guard<std::mutex> lock(readQueueMtx);//Aquire mutex before we access the queue
-	Job& job = readJobQueue.front();
+	std::shared_ptr<Job> job = readJobQueue.front();
 	readJobQueue.pop();
 	return job;
 }
 
-Job& QueueManager::getWriteJob() {
+std::shared_ptr<Job> QueueManager::getWriteJob() {
 
 	std::lock_guard<std::mutex> lock(writeQueueMtx);
-	Job& job = writeJobQueue.front();
+	std::shared_ptr<Job> job = writeJobQueue.front();
 	writeJobQueue.pop();
 	return job;
 }

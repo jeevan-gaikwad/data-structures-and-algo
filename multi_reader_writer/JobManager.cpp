@@ -1,8 +1,8 @@
-#include"JobManager.h"
+#include "JobManager.h"
 
 JobManager::JobManager(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus) {
 
-	globalExecutionStatus = globalExecutionStatus;
+	this->globalExecutionStatus = globalExecutionStatus;
 	jobSchedular = std::make_shared<JobSchedular>(globalExecutionStatus);
 	
 	currentJobId = 0;
@@ -15,20 +15,20 @@ jobid_t JobManager::createJob(IORequest& ioRequest) {
 	jobid_t newJobId = currentJobId;
 	jobidLock.unlock();
 
-	Job newJob;
-	newJob.setJobId(newJobId);
-	newJob.setProgressPercentage(0.0f);
-	newJob.setIORequest(ioRequest);
+	std::shared_ptr<Job> newJob = std::make_shared<Job>(); //Once we create this job. This Job should be refferred by everybody instead of creating copies of it.
+	newJob->setJobId(newJobId);
+	newJob->setProgressPercentage(0.0f);
+	newJob->setIORequest(ioRequest);
 	//Note job's start time
 	std::time_t now;
 	std::time(&now);
-	newJob.setStartTime(now);
+	newJob->setStartTime(now);
 	std::cout<<"New job is created id:"<<newJobId<<". Adding for scheduling.."<<std::endl;
 	jobSchedular->addJobForScheduling(newJob);
 	return newJobId;
 }
 
-const Job    JobManager::getJob(jobid_t id) {
+const std::shared_ptr<Job>    JobManager::getJob(jobid_t id) {
 	return globalExecutionStatus->getJob(id);
 }
 

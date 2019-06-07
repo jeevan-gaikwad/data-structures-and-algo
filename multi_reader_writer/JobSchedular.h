@@ -25,7 +25,7 @@ private:
 public:
 	JobSchedular(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus);
 	~JobSchedular();//Should destroy shedular thread
-	void addJobForScheduling(Job& job);
+	void addJobForScheduling(std::shared_ptr<Job> job);
 
 };
 #endif

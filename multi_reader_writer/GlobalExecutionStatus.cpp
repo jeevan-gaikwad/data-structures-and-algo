@@ -1,23 +1,32 @@
 #include"GlobalExecutionStatus.h"
 
 GlobalExecutionStatus::GlobalExecutionStatus() {
-	jobsMap = std::make_shared<std::map<jobid_t, Job >>();
+	//For now, nothing to be initialized explicitely
 }
 
 void GlobalExecutionStatus::setIsShuttingDown(bool isShuttingDown) {
 	std::unique_lock<std::mutex> lock(isShuttingDown_mtx);
-	this->isShuttingDown = isShuttingDown;
-	lock.unlock();
-	//notify all shutdown event listeners
-	std::vector<EventListener>::iterator itr = eventListeners.begin();
-	for(; itr != eventListeners.end(); itr++) {
-		EventListener& eventLister = *itr;
-		if(eventLister.eventType == EventType::SHUTDOWN) {
-			std::lock_guard<std::mutex> lock(*(eventLister.condition_var_mtx));
-			eventLister.condition_var->notify_all();
-			std::cout<<"Notified all shutdown event listeners.."<<std::endl;
+	if(!this->isShuttingDown) {
+		this->isShuttingDown = isShuttingDown;
+		lock.unlock();
+		//notify all shutdown event listeners
+		std::vector<EventListener>::iterator itr = eventListeners.begin();
+		for(; itr != eventListeners.end(); itr++) {
+			EventListener& eventLister = *itr;
+			if(eventLister.eventType == EventType::SHUTDOWN) {
+				std::lock_guard<std::mutex> lock(*(eventLister.condition_var_mtx));
+				eventLister.condition_var->notify_all();
+				std::cout<<"Notified all shutdown event listeners.."<<std::endl;
+			}
 		}
+	}else {
+		lock.unlock();
 	}
+}
+
+void GlobalExecutionStatus::insertJobIntoMap(std::shared_ptr<Job> job) {
+	std::lock_guard<std::mutex> lock(jobsMap_mtx);
+	jobsMap.insert(std::pair<jobid_t, std::shared_ptr<Job>>(job->getJobId(), job));
 }
 
 bool GlobalExecutionStatus::getIsShuttingDown() {
@@ -54,18 +63,13 @@ void GlobalExecutionStatus::decrementNoOfWriteOperationsPerformed() {
 	std::lock_guard<std::mutex> lock(noOfWriteOperationsPerformed_mtx);
 	noOfWriteOperationsPerformed -= 1;
 }
-Job GlobalExecutionStatus::getJob(jobid_t jobid) {
+const std::shared_ptr<Job> GlobalExecutionStatus::getJob(jobid_t jobid) {
 	std::lock_guard<std::mutex> lock(jobsMap_mtx);
-	std::map<jobid_t, Job>::iterator job_itr = jobsMap->find(jobid);
-	if(job_itr != jobsMap->end()) {
+	std::map<jobid_t, std::shared_ptr<Job> >::iterator job_itr = this->jobsMap.find(jobid);
+	if(job_itr != jobsMap.end()) {
 		return job_itr->second;
 	}//else throw JobNotFound exception
 }
-
-std::shared_ptr<std::map<jobid_t, Job>> 	GlobalExecutionStatus::getJobExecStatusMap() {
-	return jobsMap;	
-}
-
 
 void GlobalExecutionStatus::registerEventListener(EventListener& eventListener) {
 	eventListeners.push_back(eventListener);

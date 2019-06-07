@@ -2,7 +2,6 @@
 #include "JobExecutor.h"
 
 JobExecutor::JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus) {
-	jobExecutionQueue = std::make_shared<std::queue<Job>>();
 	this->globalExecutionStatus = globalExecutionStatus;
 	workQueueFilled_cond = std::make_shared<std::condition_variable>();
 	workQueueFilled_cond_mtx = std::make_shared<std::mutex>();
@@ -24,7 +23,7 @@ JobExecutor::JobExecutor(std::shared_ptr<GlobalExecutionStatus> globalExecutionS
 }
 
 
-void JobExecutor::addJobForExecution(Job& job) {
+void JobExecutor::addJobForExecution(std::shared_ptr<Job> job) {
 
 	enQueue(job);
 	
@@ -48,7 +47,7 @@ bool JobExecutor::isWorkQueueCondMet() {//For spurious wakup
 }
 //thread func
 void JobExecutor::executeJob() {
-	Job job;
+	std::shared_ptr<Job> job;
 	while(true) {
 		std::unique_lock<std::mutex> lock(*workQueueFilled_cond_mtx);
 		workQueueFilled_cond->wait(lock,std::bind(&JobExecutor::isWorkQueueCondMet, this));
@@ -58,11 +57,16 @@ void JobExecutor::executeJob() {
 			break;
 		}
 
-		deQueue(job);
-		std::cout<<"JobExecutor: Jod "<<job.getJobId()<<" picked from the queue successfully!"<<std::endl;
-		job.setStatus(job_status_t::IN_PROGRESS);
+		job = deQueue();//ensure that Q is not empty and if it is continue on wait
+		if(job == nullptr) {
+			//Queue is empty. job is already taken by other thread
+			continue;
+		}
+		lock.unlock();//ensure that we are giving fair chance to other threads
+		std::cout<<"JobExecutor: Jod "<<job->getJobId()<<" picked from the queue successfully!"<<std::endl;
+		job->setStatus(job_status_t::IN_PROGRESS);
 		//Check request type
-		IORequest& ioRequest = job.getIORequest();
+		IORequest& ioRequest = job->getIORequest();
 		std::shared_ptr<Resource> resource = ioRequest.resource;
 		if(IORequest::Type::READ == ioRequest.type) {
 			resource->read(ioRequest.noOfBytes, ioRequest.content);	
@@ -70,29 +74,34 @@ void JobExecutor::executeJob() {
 		} else if(IORequest::Type::WRITE == ioRequest.type) {
 			resource->write(ioRequest.content);
 		}
-		job.setStatus(job_status_t::COMPLETED);
+		job->setStatus(job_status_t::COMPLETED);
+		job->setProgressPercentage(100.0f);
 		std::time_t now;
 		std::time(&now);
-		job.setCompletionTime(now);
+		job->setCompletionTime(now);
 		std::cout<<"Job executed successfully!"<<std::endl;
 		//Handle error cases too
 	}
 }
 
-void JobExecutor::enQueue(Job& job) {
+void JobExecutor::enQueue(std::shared_ptr<Job> job) {
 	std::lock_guard<std::mutex> lock(jobExecutionQueue_mtx);
-	jobExecutionQueue->push(job);
+	jobExecutionQueue.push(job);
 }
 
-void JobExecutor::deQueue(Job& job) {
+std::shared_ptr<Job>  JobExecutor::deQueue() {
 	std::lock_guard<std::mutex> lock(jobExecutionQueue_mtx);
-	job = jobExecutionQueue->front();
-	jobExecutionQueue->pop();
+	std::shared_ptr<Job> job = nullptr;
+	if(jobExecutionQueue.size() > 0 ) {
+		job = jobExecutionQueue.front();
+		jobExecutionQueue.pop();
+	}
+	return job; // throw an exception if queue is empty
 }
 
 int  JobExecutor::getExecQueueSize() {
 	std::lock_guard<std::mutex> lock(jobExecutionQueue_mtx);
-	return jobExecutionQueue->size();
+	return jobExecutionQueue.size();
 }
 
 JobExecutor::~JobExecutor() {

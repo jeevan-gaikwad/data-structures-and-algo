@@ -30,20 +30,9 @@ public:
 	bool open();
 	jobid_t  write(std::string buff);
 	jobid_t  read(int noOfBytesToRead, std:: string& buff);
-	const Job getJobExecInfo(jobid_t jobId); //see if we can return Job&
+	const std::shared_ptr<Job> getJobExecInfo(jobid_t jobId); //see if we can return Job&
 	void     setShuttingDownFlag();
-private:
-	/*
-	//thread function to actually perform read opeation
-	void processReadRequest();
 
-	//thread function to actually perform read opeation
-	void processWriteRequest();
-
-	void createReaderThreads(); 
-	void createWriterThreads();
-	void waitForAllThreadsToFinish();
-	*/
 };
 
 #endif
