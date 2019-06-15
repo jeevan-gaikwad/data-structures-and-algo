@@ -32,6 +32,8 @@ public:
 	jobid_t  read(int noOfBytesToRead, std:: string& buff);
 	const std::shared_ptr<Job> getJobExecInfo(jobid_t jobId); //see if we can return Job&
 	void     setShuttingDownFlag();
+	bool     isShuttingDown();
+	int      getNoOfWriteOperationsPerformed();
 
 };
 

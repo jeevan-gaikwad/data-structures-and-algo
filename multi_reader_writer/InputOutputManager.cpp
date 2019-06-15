@@ -57,7 +57,16 @@ const std::shared_ptr<Job> InputOutputManager::getJobExecInfo(jobid_t jobId) {
 	return jobManager->getJob(jobId);//Throw JobNotFound exception
 
 }
+
 void InputOutputManager::setShuttingDownFlag() {
 	globalExecutionStatus->setIsShuttingDown(true);
+}
+
+int InputOutputManager::getNoOfWriteOperationsPerformed() {
+	return globalExecutionStatus->getNoOfWriteOperationsPerformed();
+}
+
+bool InputOutputManager::isShuttingDown() {
+	return globalExecutionStatus->getIsShuttingDown();
 }
 

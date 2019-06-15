@@ -35,30 +35,49 @@ bool JobSchedular::isSchedularCondMet() { //For Spurious wakeup
 void JobSchedular::runSchedular() {
 	
 	while(globalExecutionStatus->getIsShuttingDown() == false) {
-
-		std::unique_lock<std::mutex> lock(*run_schedular_cond_mtx);
-		std::cout<<"runSchedular is now going to wait until someone wakesup.."<<std::endl;
-		run_schedular_cond->wait(lock, std::bind(&JobSchedular::isSchedularCondMet, this));
 		
-		if(globalExecutionStatus->getIsShuttingDown() == true) { //This is to ensure that after waking up, system is NOT shutting down
-			std::cout<<"System is shutting down. Terminating schedular thread."<<std::endl;
-			break;
+		if(ioQueueManager->getWriteJobCurrentQSize() == 0 && ioQueueManager->getReadJobCurrentQSize() == 0) { //Nothing to schedule, wait for job(s)
+			std::unique_lock<std::mutex> lock(*run_schedular_cond_mtx);
+			std::cout<<"Nothing in read/write Queue. Schedular is now going to wait until someone wakesup.."<<std::endl;
+			run_schedular_cond->wait(lock, std::bind(&JobSchedular::isSchedularCondMet, this));
+	
+			if(globalExecutionStatus->getIsShuttingDown() == true) { //This is to ensure that after waking up, system is NOT shutting down
+				std::cout<<"System is shutting down. Terminating schedular thread."<<std::endl;
+				break; //break while loop
+			}
 		}
 
-		/* 
+		/* Scheduling logic. Little complex. Think on simplifying it
 			1. Ensure that only one WRITE job is running
 			2. No starvation for read/write requests
 		*/	
+	
 		std::cout<<"Running job schedular."<<std::endl;
 		if(ioQueueManager->getWriteJobCurrentQSize() > 0) {
-			jobExecutor->addJobForExecution(ioQueueManager->getWriteJob());
+			if(globalExecutionStatus->isWriteOperationInProgress() == false && (
+			globalExecutionStatus->getNoOfWriteOperationsPerformed() <= 5 || ioQueueManager->getReadJobCurrentQSize() == 0)) {
+				
+				jobExecutor->addJobForExecution(ioQueueManager->getWriteJob());
+
+			}else {
+				//Hold write requests execution fot a while and prioritize READ				
+				globalExecutionStatus->resetNoOfWriteOperationsPerformed();
+			}
 		}
 
 		if(ioQueueManager->getReadJobCurrentQSize() > 0) {
-			jobExecutor->addJobForExecution(ioQueueManager->getReadJob());
-		}
+			if(globalExecutionStatus->getNoOfReadOperationsPerformed() <= 4||!(ioQueueManager->getWriteJobCurrentQSize() > 0)) {
 
+				jobExecutor->addJobForExecution(ioQueueManager->getReadJob());
+
+			} else {
+				//Hold read requests execution for a while and prioritize WRITE
+				globalExecutionStatus->resetNoOfReadOperationsPerformed();
+			}
+			std::this_thread::sleep_for(std::chrono::seconds(1)); //This is when queue(s) are not empty and give some time for existing job execution
+		}
 	}
+
 }
 
 void JobSchedular::addJobForScheduling(std::shared_ptr<Job> job) {

@@ -30,6 +30,15 @@ void sample_read_req_thread_func(std::shared_ptr<InputOutputManager> ioManager) 
 	ioManager->setShuttingDownFlag();
 }
 
+void show_execution_status(std::shared_ptr<InputOutputManager> ioManager) {
+
+	while(ioManager->isShuttingDown() == false) {
+		
+		//Display no of write operations performed
+		std::cout<<"No fo write operations performed:"<<ioManager->getNoOfWriteOperationsPerformed()<<std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(3));
+	}
+}
 
 int main(void) {
 		std::shared_ptr<InputOutputManager>  io; 
@@ -52,10 +61,13 @@ int main(void) {
 		noOfBytesread = io->read(6, emptyBuff);
 		*/
 		//I can have multiple thread/program which can call above write and read on io object. InputOut class should ensure that client get the services.
-		//std::thread writeReqsThread(sample_write_req_thread_func, io);
-		std::thread readReqsThread(sample_read_req_thread_func, io);
+		std::thread writeReqsThread(sample_write_req_thread_func, io);
+		//std::thread readReqsThread(sample_read_req_thread_func, io);
+		
+		std::thread execStatusThread(show_execution_status, io);
 
-		//writeReqsThread.join();
-		readReqsThread.join();
+		writeReqsThread.join();
+		//readReqsThread.join();
+		execStatusThread.join();
 	return 0;
 }

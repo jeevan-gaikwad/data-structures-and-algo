@@ -1,5 +1,6 @@
 #ifndef _GLOBAL_EXEC_STS_H_
 #define _GLOBAL_EXEC_STS_H_
+
 #include <iostream>
 #include <memory>
 #include <condition_variable>
@@ -11,6 +12,7 @@
 enum EventType { SHUTDOWN };
 
 class EventListener {
+
 public:
 	std::shared_ptr<std::condition_variable> condition_var;
 	std::shared_ptr<std::mutex> condition_var_mtx;
@@ -31,7 +33,7 @@ private:
 
 	/*Following isWriteOperationInProgress, noOfReadOperationsInProgress  and noOfWriteOperationsPerformed are used to avoid startvation of the requests. And JobSchedular uses these variables. */
 
-	bool isWriteOperationInProgress;
+	bool writeOperationInProgress;
 	std::mutex isWriteOperationInProgress_mtx;
 
 	int  noOfReadOperationsInProgress;
@@ -40,6 +42,9 @@ private:
 	int  noOfWriteOperationsPerformed;
 	std::mutex noOfWriteOperationsPerformed_mtx;
 
+	int  noOfReadOperationsPerformed;
+	std::mutex noOfReadOperationsPerformed_mtx;
+
 public:
 	GlobalExecutionStatus();
 	void insertJobIntoMap(std::shared_ptr<Job> job);
@@ -47,13 +52,24 @@ public:
 	bool getIsShuttingDown();
 
 	void setIsWriteOperationInProgress(bool isWriteOperationInProgress);
-	bool getIsWriteOperationInProgress();
+	bool isWriteOperationInProgress();
 
 	void incrementNoOfReadOperationsInProgressByOne();
 	void decrementNoOfReadOperationsInProgressByOne();
 
+	//Following functions are helpful for job scheduling
+	//READ
+	void incrementNoOfReadOperationsPerformed();
+	void decrementNoOfReadOperationsPerformed();
+	int  getNoOfReadOperationsPerformed();
+	void resetNoOfReadOperationsPerformed();
+
+	//WRITE
 	void incrementNoOfWriteOperationsPerformed();
 	void decrementNoOfWriteOperationsPerformed();
+	int  getNoOfWriteOperationsPerformed();
+	void resetNoOfWriteOperationsPerformed();
+	
 	void registerEventListener(EventListener& eventListener);
 	const std::shared_ptr<Job>  getJob(jobid_t id);
 };

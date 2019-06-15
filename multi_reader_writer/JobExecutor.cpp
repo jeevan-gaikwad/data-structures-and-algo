@@ -68,11 +68,17 @@ void JobExecutor::executeJob() {
 		//Check request type
 		std::shared_ptr<IORequest> ioRequest = job->getIORequest();
 		std::shared_ptr<Resource> resource = ioRequest->resource;
+		//we can process READ/WRITE req in a seperate func
 		if(IORequest::Type::READ == ioRequest->type) {
-			resource->read(ioRequest->noOfBytes, ioRequest->content);	
+			globalExecutionStatus->incrementNoOfReadOperationsInProgressByOne();
+			resource->read(ioRequest->noOfBytes, ioRequest->content);//Blocking call
 			//Process part by part reading/writting and update % in the job status
+			globalExecutionStatus->decrementNoOfReadOperationsInProgressByOne();
 		} else if(IORequest::Type::WRITE == ioRequest->type) {
-			resource->write(ioRequest->content);
+			globalExecutionStatus->setIsWriteOperationInProgress(true);	
+			resource->write(ioRequest->content); //Blocking call
+			globalExecutionStatus->setIsWriteOperationInProgress(false);	
+			globalExecutionStatus->incrementNoOfWriteOperationsPerformed();	
 		}
 		job->setStatus(job_status_t::COMPLETED);
 		job->setProgressPercentage(100.0f);
