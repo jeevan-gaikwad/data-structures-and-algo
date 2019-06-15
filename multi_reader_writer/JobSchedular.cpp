@@ -63,8 +63,8 @@ void JobSchedular::runSchedular() {
 
 void JobSchedular::addJobForScheduling(std::shared_ptr<Job> job) {
 
-	IORequest& request = job->getIORequest();//Return const
-	IORequest::Type reqType = request.type;
+	std::shared_ptr<IORequest> request = job->getIORequest();//Return const
+	IORequest::Type reqType = request->type;
 	if(reqType == IORequest::Type::READ) {
 		ioQueueManager->addReadJob(job);
 	}else if(reqType == IORequest::Type::WRITE) {

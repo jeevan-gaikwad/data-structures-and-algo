@@ -17,13 +17,13 @@ private:
 	jobid_t id;
 	float progressPercentage;
 	std::time_t startTime, completionTime;
-	IORequest ioRequest;
+	std::shared_ptr<IORequest> ioRequest;
 	Status status;
 
 public:
 
 	Job() { }
-	Job(jobid_t id, float progressPercentage, std::time_t startTime,std::time_t completionTime, IORequest& ioRequest):
+	Job(jobid_t id, float progressPercentage, std::time_t startTime,std::time_t completionTime, std::shared_ptr<IORequest> ioRequest):
 	id(id), progressPercentage(progressPercentage), startTime(startTime), completionTime(completionTime), ioRequest(ioRequest) { }
 	//Getter and setters
 	jobid_t     getJobId() { return id; }
@@ -39,8 +39,8 @@ public:
 	std::time_t getCompletionTime() { return completionTime; }
 	void        setCompletionTime(std::time_t completionTime) { this->completionTime = completionTime; }
 
-	IORequest&  getIORequest() { return ioRequest; }
-	void 	    setIORequest(IORequest& ioRequest) { this->ioRequest = ioRequest; }
+	std::shared_ptr<IORequest>  getIORequest() { return ioRequest; }
+	void 	    setIORequest(std::shared_ptr<IORequest> ioRequest) { this->ioRequest = ioRequest; }
 	
 	void        setStatus(Status status) { this->status = status; }
 	Status		getStatus() { this->status; }

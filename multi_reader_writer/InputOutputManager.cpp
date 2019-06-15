@@ -33,21 +33,21 @@ bool InputOutputManager::open()  { // should throw an exception if there is an e
 
 jobid_t  InputOutputManager::read(int noOfBytesToRead, std::string& buff)
 {
-    IORequest readReq;
-	readReq.type = IORequest::Type::READ;
-	readReq.noOfBytes = noOfBytesToRead;
-	readReq.content = buff;
-	readReq.resource = resource; // Read operation would be performed on this request
+    std::shared_ptr<IORequest> readReq = std::make_shared<IORequest>();
+	readReq->type = IORequest::Type::READ;
+	readReq->noOfBytes = noOfBytesToRead;
+	readReq->content = buff;
+	readReq->resource = resource; // Read operation would be performed on this request
     return jobManager->createJob(readReq);  //returns jobid
 }
 	
 jobid_t  InputOutputManager::write(std::string buff) {
 
-	IORequest writeReq;
-	writeReq.type = IORequest::Type::WRITE;
-	writeReq.noOfBytes = buff.length();
-	writeReq.content = buff;
-	writeReq.resource = resource; // Write operation would be performed on this request
+	std::shared_ptr<IORequest> writeReq = std::make_shared<IORequest>();
+	writeReq->type = IORequest::Type::WRITE;
+	writeReq->noOfBytes = buff.length();
+	writeReq->content = buff;
+	writeReq->resource = resource; // Write operation would be performed on this request
 
 	return jobManager->createJob(writeReq); //returns jobid
 }

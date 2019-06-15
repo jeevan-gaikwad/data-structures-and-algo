@@ -8,7 +8,7 @@ JobManager::JobManager(std::shared_ptr<GlobalExecutionStatus> globalExecutionSta
 	currentJobId = 0;
 }
 
-jobid_t JobManager::createJob(IORequest& ioRequest) {
+jobid_t JobManager::createJob(std::shared_ptr<IORequest> ioRequest) {
 
 	std::unique_lock<std::mutex> jobidLock(currentJobId_mtx);
 	currentJobId++;

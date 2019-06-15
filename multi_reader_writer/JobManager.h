@@ -15,7 +15,7 @@ class JobManager {
 
 public:
 	JobManager(std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus);	
-	jobid_t 				createJob(IORequest& ioRequest);
+	jobid_t 				createJob(std::shared_ptr<IORequest> ioRequest);
 	const std::shared_ptr<Job>    getJob(jobid_t id);
 	job_status_t		    deleteJob(jobid_t id);//Should Throw JobNotFound exception
 	std::shared_ptr<GlobalExecutionStatus> globalExecutionStatus;

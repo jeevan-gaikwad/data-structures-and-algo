@@ -66,13 +66,13 @@ void JobExecutor::executeJob() {
 		std::cout<<"JobExecutor: Jod "<<job->getJobId()<<" picked from the queue successfully!"<<std::endl;
 		job->setStatus(job_status_t::IN_PROGRESS);
 		//Check request type
-		IORequest& ioRequest = job->getIORequest();
-		std::shared_ptr<Resource> resource = ioRequest.resource;
-		if(IORequest::Type::READ == ioRequest.type) {
-			resource->read(ioRequest.noOfBytes, ioRequest.content);	
+		std::shared_ptr<IORequest> ioRequest = job->getIORequest();
+		std::shared_ptr<Resource> resource = ioRequest->resource;
+		if(IORequest::Type::READ == ioRequest->type) {
+			resource->read(ioRequest->noOfBytes, ioRequest->content);	
 			//Process part by part reading/writting and update % in the job status
-		} else if(IORequest::Type::WRITE == ioRequest.type) {
-			resource->write(ioRequest.content);
+		} else if(IORequest::Type::WRITE == ioRequest->type) {
+			resource->write(ioRequest->content);
 		}
 		job->setStatus(job_status_t::COMPLETED);
 		job->setProgressPercentage(100.0f);
