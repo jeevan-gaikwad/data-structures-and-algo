@@ -1,6 +1,7 @@
-#include<iostream>
-#include"InputOutputManager.h"
-#include<string>
+#include <iostream>
+#include <string>
+#include "InputOutputManager.h"
+#include "LogManager.h"
 
 void sample_write_req_thread_func(std::shared_ptr<InputOutputManager> ioManager) {
 
@@ -41,13 +42,18 @@ void show_execution_status(std::shared_ptr<InputOutputManager> ioManager) {
 }
 
 int main(void) {
+		LogManager logger("logs/test_client/client.log");
+		int i = 50;
+		LOG_INFO(logger, "Test Info log msg"<<i);
 		std::shared_ptr<InputOutputManager>  io; 
 		try {
 			io = std::make_shared<InputOutputManager>(TYPE_FILE,"abc.txt"); // OR InputOut io = new InputOut(PIPE,"myPipe");
 		}catch(std::exception &e) {
-			std::cout<<"Exception occurred while initialzing InputOutputManager:Cause:"<<e.what()<<std::endl;
+			std::ostringstream msg;
+			msg << "Exception occurred while initialzing InputOutputManager:Cause:"<<e.what()<<std::endl;
+			LOG_ERROR(logger,msg);
 		}
-		std::cout<<"In main. InputOutputManager initialized successfully"<<std::endl;
+		LOG_DEBUG(logger,"In main. InputOutputManager initialized successfully");
 
 		if(io->open()) {
 			std::cout<<"File opened successfully."<<std::endl;
