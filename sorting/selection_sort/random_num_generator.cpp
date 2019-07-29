@@ -4,12 +4,17 @@
 #include<ctime>
 #include<vector>
 
+const int MIN = 0;
+const int MAX = 30000;
 
 void generateRandomNumber(std::vector<int>& randomNumbers, long noOfElements){
 
 	std::srand(static_cast<unsigned int>(std::time(nullptr)));
 	for(long i = 0; i< noOfElements ; i++) {
-		randomNumbers.push_back(std::rand());
+		/* Generate random number within a range */
+		static const double fraction = 1.0 / (RAND_MAX + 1.0);
+		long randomNumber = MIN + static_cast<int> ((MAX - MIN +1) * (std::rand() * fraction));
+		randomNumbers.push_back(randomNumber);
 	}
 }
 
@@ -56,6 +61,6 @@ int main(int argc, char* argv[]) {
 		std::cout<<"All numbers have been written to the file "<<argv[1]<<" successfully!"<<std::endl;
 	}else
 		std::cerr<<"Failed to random numbers to the file "<< argv[1]<<std::endl;
-
+	outputFile.close();
 	return 0;
 }
