@@ -29,6 +29,7 @@ private:
 public:
 	enum Category { INFO, DEBUG, ERROR };
 	LogManager(std::string logFileName);
+	~LogManager(); //close the log file
 	void setIsDebugLogOn(bool isDebugLogOn) { this->isDebugLogOn = isDebugLogOn; }
 	void logMsg(Category category, const char* fileName, int lineNo, const char* funcName, const std::string msg);
 
@@ -41,7 +42,6 @@ public:
 	void logDebugMsg(std::ostringstream oss);
 	void logErrorMsg(std::string msg);
 */	
-
 };
 
 #endif

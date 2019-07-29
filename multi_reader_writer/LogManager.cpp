@@ -80,3 +80,7 @@ void LogManager::logMsg(Category category, const char* fileName, int lineNo, con
 
 }
 
+LogManager:: ~LogManager() {
+    std::lock_guard<std::mutex> lock(ofLogFile_mtx);
+	ofLogFile.close();
+} 
